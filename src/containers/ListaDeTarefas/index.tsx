@@ -1,43 +1,74 @@
+import { useSelector } from 'react-redux'
+
 import Tarefa from '../../components/Tarefa'
-import { Container } from './styles'
+import { MainContainer, Titulo } from '../../styles'
 
-const tarefas = [
-  {
-    titulo: 'Estudar TypeScript',
-    descricao: 'Ver a aula 3 da EBAC',
-    prioridade: 'importante',
-    status: 'pendente'
-  },
-  {
-    titulo: 'Pagar a conta de internet',
-    descricao: 'Baixar fatura no Gmail',
-    prioridade: 'urgente',
-    status: 'concluída'
-  },
-  {
-    titulo: 'Ir para academia',
-    descricao: 'Fazer treino B',
-    prioridade: 'importante',
-    status: 'pendente'
+import { RootReducer } from '../../store'
+
+const ListaDeTarefas = () => {
+  const { itens } = useSelector((state: RootReducer) => state.tarefas)
+  const { termo, criterio, valor } = useSelector(
+    (state: RootReducer) => state.filtro
+  )
+
+  const filtraTarefas = () => {
+    let tarefasFiltradas = itens
+    if (termo !== undefined) {
+      tarefasFiltradas = tarefasFiltradas.filter(
+        (item) => item.titulo.toLowerCase().search(termo.toLowerCase()) >= 0
+      )
+
+      if (criterio === 'prioridade') {
+        tarefasFiltradas = tarefasFiltradas.filter(
+          (item) => item.prioridade === valor
+        )
+      } else if (criterio === 'status') {
+        tarefasFiltradas = tarefasFiltradas.filter(
+          (item) => item.status === valor
+        )
+      }
+
+      return tarefasFiltradas
+    } else {
+      return itens
+    }
   }
-]
 
-const ListaDeTarefas = () => (
-  <Container>
-    <p>2 tarefas marcadas como: &quot;categoria&ldquo; e &quot;termo&ldquo;</p>
-    <ul>
-      {tarefas.map((t) => (
-        <li key={t.titulo}>
-          <Tarefa
-            descricao={t.descricao}
-            titulo={t.titulo}
-            status={t.status}
-            prioridade={t.prioridade}
-          />
-        </li>
-      ))}
-    </ul>
-  </Container>
-)
+  const exibeResultadoFiltrage = (quantidade: number) => {
+    let mensagem = ''
+    const complementacao =
+      termo !== undefined && termo?.length > 0 ? `e "${termo}"` : ''
+
+    if (criterio === 'todas') {
+      mensagem = `${quantidade} tarefa(s) encontrada(s) como: todas ${complementacao}`
+    } else {
+      mensagem = `${quantidade} tarefa(s) encontrada(s) como: "${`${criterio} = ${valor}`}" ${complementacao}`
+    }
+
+    return mensagem
+  }
+
+  const tarefas = filtraTarefas()
+  const mensagem = exibeResultadoFiltrage(tarefas.length)
+
+  return (
+    <MainContainer>
+      <Titulo as="p">{mensagem}</Titulo>
+      <ul>
+        {tarefas.map((t) => (
+          <li key={t.titulo}>
+            <Tarefa
+              descricao={t.descricao}
+              titulo={t.titulo}
+              status={t.status}
+              prioridade={t.prioridade}
+              id={t.id}
+            />
+          </li>
+        ))}
+      </ul>
+    </MainContainer>
+  )
+}
 
 export default ListaDeTarefas
